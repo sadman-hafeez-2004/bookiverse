@@ -4,10 +4,10 @@ let socket = null;
 
 export const connectSocket = (token) => {
   if (socket?.connected) return socket;
-  socket = io(window.location.origin, {
-    auth: { token },
-    transports: ['websocket'],
-  });
+  socket = io(import.meta.env.VITE_API_URL || window.location.origin, {
+  auth: { token },
+  transports: ['websocket'],
+});
   return socket;
 };
 
