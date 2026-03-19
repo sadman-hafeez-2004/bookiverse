@@ -34,18 +34,7 @@ initSocket(io);
 
 // Middleware
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow no-origin requests (mobile, Postman, curl)
-    if (!origin) return callback(null, true);
-    // Allow localhost for development
-    if (origin.includes('localhost')) return callback(null, true);
-    // Allow ALL vercel.app URLs
-    if (origin.includes('vercel.app')) return callback(null, true);
-    // Allow your specific onrender domain calling itself
-    if (origin.includes('onrender.com')) return callback(null, true);
-    // Block everything else
-    callback(new Error('CORS blocked: ' + origin));
-  },
+  origin: process.env.CLIENT_URL,
   credentials: true,
 }));
 app.use(express.json());
