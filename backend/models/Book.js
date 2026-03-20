@@ -62,6 +62,9 @@ const bookSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Featured book (shown on homepage banner)
+    isFeatured: { type: Boolean, default: false },
+
     // Denormalized stats for fast display
     collectionsCount: { type: Number, default: 0 }, // how many users collected it
     reviewsCount:     { type: Number, default: 0 },

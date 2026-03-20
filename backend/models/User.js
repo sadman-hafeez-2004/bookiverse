@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema(
 
     // Total books collected (denormalized)
     collectedCount: { type: Number, default: 0 },
+
+    // Ban
+    isBanned:  { type: Boolean, default: false },
+    banReason: { type: String,  default: '' },
   },
   { timestamps: true }
 );

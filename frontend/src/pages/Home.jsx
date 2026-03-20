@@ -4,6 +4,41 @@ import api from '../lib/api';
 import { useAuthStore } from '../store';
 import { Spinner, Btn } from '../components/ui';
 
+// ── Announcement banner ───────────────────────────────────────
+function AnnouncementBanner() {
+  const [anns, setAnns] = useState([]);
+  const [dismissed, setDismissed] = useState([]);
+  useEffect(() => {
+    api.get('/admin/announcements/active').then(r => setAnns(r.data.announcements)).catch(()=>{});
+  }, []);
+  const visible = anns.filter(a => !dismissed.includes(a._id));
+  if (!visible.length) return null;
+  const colors = { info:'var(--blue-btn)', warning:'#D97706', success:'var(--green-400)' };
+  const bgs    = { info:'var(--blue-fill)', warning:'#FEF3C7', success:'var(--green-50)' };
+  const texts  = { info:'var(--blue-text)', warning:'#92400E', success:'var(--green-800)' };
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:16 }}>
+      {visible.map(a => (
+        <div key={a._id} style={{
+          background: bgs[a.type]||bgs.info,
+          borderLeft: `3px solid ${colors[a.type]||colors.info}`,
+          borderRadius:'var(--r-md)', padding:'10px 14px',
+          display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10,
+        }}>
+          <div>
+            <div style={{ fontWeight:700, fontSize:13, color: texts[a.type]||texts.info }}>{a.title}</div>
+            <div style={{ fontSize:12, color: texts[a.type]||texts.info, marginTop:2, opacity:0.85 }}>{a.message}</div>
+          </div>
+          <button onClick={()=>setDismissed(d=>[...d,a._id])} style={{
+            background:'none', border:'none', cursor:'pointer', fontSize:16,
+            color: texts[a.type]||texts.info, flexShrink:0, padding:0, lineHeight:1,
+          }}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const GENRES = ['Fiction','Non-Fiction','Science Fiction','Fantasy','Mystery',
   'Thriller','Romance','Horror','Biography','History','Self-Help','Science','Philosophy'];
 const SLIDES = ['/banners/slide-1.jpg','/banners/slide-2.jpg','/banners/slide-3.jpg'];

@@ -15,8 +15,9 @@ import BookDetail  from './pages/BookDetail';
 import Chat        from './pages/Chat';
 import {
   ReadersPage, UploadPage, SettingsPage,
-  AuthorDetailPage, SearchPage, AdminPage,
+  AuthorDetailPage, SearchPage,
 } from './pages/Pages';
+import { AdminPage } from './pages/AdminPanel';
 
 function AppInner() {
   const { user, loading, init } = useAuthStore();
