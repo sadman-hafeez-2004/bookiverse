@@ -14,9 +14,10 @@ import Profile     from './pages/Profile';
 import BookDetail  from './pages/BookDetail';
 import Chat        from './pages/Chat';
 import {
-  ReadersPage, UploadPage, SettingsPage,
+  ReadersPage, SettingsPage,
   AuthorDetailPage, SearchPage,
 } from './pages/Pages';
+import { UploadPage } from './pages/UploadPage';
 import { AdminPage } from './pages/AdminPanel';
 
 function AppInner() {
