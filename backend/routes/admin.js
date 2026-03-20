@@ -11,8 +11,9 @@ const {
 } = require('../controllers/adminController');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// Public — active announcements for all users
+// Public routes (no auth needed)
 router.get('/announcements/active', getActiveAnnouncements);
+router.get('/genres/all', getGenres);
 
 // All routes below — admin only
 router.use(protect, adminOnly);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuthStore } from '../store';
 import { Spinner, Btn } from '../components/ui';
+import { useGenres } from '../hooks/useGenres';
 
 // ── Announcement banner ───────────────────────────────────────
 function AnnouncementBanner() {
@@ -39,8 +40,6 @@ function AnnouncementBanner() {
   );
 }
 
-const GENRES = ['Fiction','Non-Fiction','Science Fiction','Fantasy','Mystery',
-  'Thriller','Romance','Horror','Biography','History','Self-Help','Science','Philosophy'];
 const SLIDES = ['/banners/slide-1.jpg','/banners/slide-2.jpg','/banners/slide-3.jpg'];
 
 // ── Banner ────────────────────────────────────────────────────
@@ -76,8 +75,8 @@ function Banner() {
 }
 
 // ── Category grids ────────────────────────────────────────────
-function CategorySection({ allBooks }) {
-  const byGenre = GENRES.map(g => ({ genre:g, books:allBooks.filter(b=>b.genre===g).slice(0,4) })).filter(g=>g.books.length>0);
+function CategorySection({ allBooks, genres }) {
+  const byGenre = genres.map(g => ({ genre:g, books:allBooks.filter(b=>b.genre===g).slice(0,4) })).filter(g=>g.books.length>0);
   if (!byGenre.length) return null;
   return (
     <div style={{ marginBottom:32 }}>
@@ -149,6 +148,7 @@ function ReadersSection({ readers }) {
 // ── Main ──────────────────────────────────────────────────────
 export default function Home() {
   const { user }  = useAuthStore();
+  const { genres } = useGenres();
   const [allBooks,  setAllBooks]  = useState([]);
   const [readers,   setReaders]   = useState([]);
   const [loading,   setLoading]   = useState(true);
@@ -286,7 +286,7 @@ export default function Home() {
 
         {/* Category tabs */}
         <div className="ctabs">
-          {['All',...GENRES].map(g => (
+          {['All',...genres].map(g => (
             <button key={g} onClick={() => { setActiveTab(g); setPage(1); }} style={{
               flexShrink:0, padding:'7px 16px', borderRadius:20,
               border: activeTab===g ? 'none' : '0.5px solid var(--border)',
@@ -298,7 +298,7 @@ export default function Home() {
           ))}
         </div>
 
-        {!loading && <CategorySection allBooks={allBooks} />}
+        {!loading && <CategorySection allBooks={allBooks} genres={genres} />}
         {!loading && <ReadersSection readers={readers} />}
 
         {/* All books */}

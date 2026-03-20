@@ -3,11 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 import { useAuthStore, useToastStore, useOnlineStore } from '../store';
 import { Av, Btn, Input, Textarea, Select, Spinner, Empty, Stars } from '../components/ui';
+import { useGenres } from '../hooks/useGenres';
 import BookCard from '../components/BookCard';
-
-const GENRES = ['Fiction','Non-Fiction','Science Fiction','Fantasy','Mystery','Thriller',
-  'Romance','Horror','Biography','History','Self-Help','Science','Philosophy','Poetry',
-  'Children','Young Adult','Graphic Novel','Other'];
 
 // ─── Readers ─────────────────────────────────────────────────
 export function ReadersPage() {
@@ -67,6 +64,7 @@ export function ReadersPage() {
 export function UploadPage() {
   const { add }     = useToastStore();
   const navigate    = useNavigate();
+  const { genres }  = useGenres();
   const [tab, setTab] = useState('book');
   const [authors, setAuthors] = useState([]);
 
@@ -156,7 +154,7 @@ export function UploadPage() {
 
             <Select label="Genre *" value={bookForm.genre} onChange={e => setBookForm(p => ({ ...p, genre: e.target.value }))} required>
               <option value="">Select genre…</option>
-              {GENRES.map(g => <option key={g}>{g}</option>)}
+              {genres.map(g => <option key={g}>{g}</option>)}
             </Select>
 
             <div className="form-group">

@@ -144,21 +144,10 @@ const getUserCollection = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  getUsers,
-  getUserById,
-  updateMe,
-  toggleFollow,
-  getFollowers,
-  getFollowing,
-  getUserCollection,
-};
-
 // PUT /api/users/me/cover
 const updateCover = async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image provided.' });
-    const User = require('../models/User');
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { coverImage: req.file.path },
@@ -168,4 +157,13 @@ const updateCover = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports.updateCover = updateCover;
+module.exports = {
+  getUsers,
+  getUserById,
+  updateMe,
+  updateCover,
+  toggleFollow,
+  getFollowers,
+  getFollowing,
+  getUserCollection,
+};

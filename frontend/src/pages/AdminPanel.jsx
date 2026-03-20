@@ -35,11 +35,12 @@ export function AdminPage() {
         .stat-num { font-size:28px; font-weight:800; color:var(--blue-btn); }
         .stat-lbl { font-size:12px; color:var(--text-3); margin-top:3px; }
         .form-row { display:flex; gap:8px; margin-bottom:16px; }
+        .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
         .badge-active   { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; background:var(--green-50); color:var(--green-800); }
         .badge-inactive { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; background:var(--neutral-100); color:var(--neutral-600); }
-        .badge-info    { background:var(--blue-fill); color:var(--blue-text); }
-        .badge-warning { background:#FEF3C7; color:#92400E; }
-        .badge-success { background:var(--green-50); color:var(--green-800); }
+        .badge-info    { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; background:var(--blue-fill); color:var(--blue-text); }
+        .badge-warning { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; background:#FEF3C7; color:#92400E; }
+        .badge-success { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; background:var(--green-50); color:var(--green-800); }
       `}</style>
 
       <div className="admin-wrap">
@@ -424,14 +425,22 @@ function GenresTab({ add }) {
   const [editing, setEditing] = useState(null);
   const [editVal, setEditVal] = useState('');
 
-  useEffect(() => { api.get('/admin/genres').then(r => setGenres(r.data.genres)); }, []);
+  useEffect(() => {
+    api.get('/admin/genres')
+      .then(r => setGenres(r.data.genres))
+      .catch(err => console.error('Failed to load genres:', err));
+  }, []);
 
   const create = async () => {
     if (!newName.trim()) return;
-    const { data } = await api.post('/admin/genres', { name: newName.trim() });
-    setGenres(g => [...g, data.genre]);
-    setNewName('');
-    add(`Genre "${data.genre.name}" added!`);
+    try {
+      const { data } = await api.post('/admin/genres', { name: newName.trim() });
+      setGenres(g => [...g, data.genre]);
+      setNewName('');
+      add('Genre "' + data.genre.name + '" added!');
+    } catch (err) {
+      add(err.response?.data?.message || 'Failed to add genre.', 'error');
+    }
   };
 
   const save = async (id) => {
@@ -493,15 +502,23 @@ function AnnouncementsTab({ add }) {
   const [form, setForm] = useState({ title:'', message:'', type:'info' });
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => { api.get('/admin/announcements').then(r => setAnns(r.data.announcements)); }, []);
+  useEffect(() => {
+    api.get('/admin/announcements')
+      .then(r => setAnns(r.data.announcements))
+      .catch(err => console.error('Failed to load announcements:', err));
+  }, []);
 
   const create = async () => {
     if (!form.title.trim() || !form.message.trim()) return add('Title and message required.', 'error');
-    const { data } = await api.post('/admin/announcements', form);
-    setAnns(a => [data.announcement, ...a]);
-    setForm({ title:'', message:'', type:'info' });
-    setShowForm(false);
-    add('Announcement sent!');
+    try {
+      const { data } = await api.post('/admin/announcements', form);
+      setAnns(a => [data.announcement, ...a]);
+      setForm({ title:'', message:'', type:'info' });
+      setShowForm(false);
+      add('Announcement sent!');
+    } catch (err) {
+      add(err.response?.data?.message || 'Failed to send announcement.', 'error');
+    }
   };
 
   const toggle = async (id) => {

@@ -24,6 +24,10 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'User no longer exists.' });
     }
 
+    if (user.isBanned) {
+      return res.status(403).json({ message: `Account banned. Reason: ${user.banReason || 'Violation of terms.'}` });
+    }
+
     req.user = user;
     next();
   } catch (error) {
