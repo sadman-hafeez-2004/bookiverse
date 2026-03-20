@@ -153,3 +153,19 @@ module.exports = {
   getFollowing,
   getUserCollection,
 };
+
+// PUT /api/users/me/cover
+const updateCover = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image provided.' });
+    const User = require('../models/User');
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { coverImage: req.file.path },
+      { new: true }
+    ).select('-password');
+    res.json({ coverImage: user.coverImage, user });
+  } catch (err) { next(err); }
+};
+
+module.exports.updateCover = updateCover;

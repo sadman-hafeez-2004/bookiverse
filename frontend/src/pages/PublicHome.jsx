@@ -1,109 +1,423 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../lib/api';
-import BookCard from '../components/BookCard';
-import { Av, Btn, Spinner } from '../components/ui';
+import { Av, Spinner } from '../components/ui';
 
 export default function PublicHome() {
   const [books,   setBooks]   = useState([]);
+  const [authors, setAuthors] = useState([]);
   const [readers, setReaders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      api.get('/books',  { params: { limit: 12, sort: 'popular' } }),
-      api.get('/users',  { params: { limit: 6  } }),
-    ]).then(([b, u]) => {
+      api.get('/books',   { params: { limit: 6,  sort: 'popular' } }),
+      api.get('/authors', { params: { limit: 4  } }),
+      api.get('/users',   { params: { limit: 6  } }),
+    ]).then(([b, a, u]) => {
       setBooks(b.data.books);
+      setAuthors(a.data.authors.slice(0, 4)); // max 4 authors
       setReaders(u.data.users);
     }).finally(() => setLoading(false));
   }, []);
 
   return (
-    <div>
-      {/* ── Hero / Intro (right section of wireframe) ── */}
-      <section style={{ background: 'var(--blue-fill)', borderBottom: '0.5px solid var(--border)', padding: '32px 0 28px' }}>
-        <div className="container">
-          {/* Stacked reader avatars */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: -8, marginBottom: 16 }}>
-            {readers.slice(0, 4).map((r, i) => (
-              <div key={r._id} style={{ marginLeft: i === 0 ? 0 : -10, zIndex: 4 - i }}>
-                <Av user={r} size="sm" style={{ border: '2px solid var(--blue-fill)' }} />
+    <div style={{ overflowX: 'hidden' }}>
+
+      {/* ══════════════════════════════════════════
+          PART 1 — Hero full screen with background
+      ══════════════════════════════════════════ */}
+      <section style={{
+        width: '100%',
+        minHeight: '100vh',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}>
+        {/* Background image */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'url(/home-background.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'brightness(0.45)',
+          zIndex: 0,
+        }} />
+
+        {/* Hero content */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', textAlign: 'center',
+          padding: '60px 24px',
+          width: '100%', maxWidth: 580,
+        }}>
+          <h1 style={{
+            fontSize: 46, fontWeight: 800, color: '#ffffff',
+            letterSpacing: '-1px', marginBottom: 10,
+            textShadow: '0 2px 20px rgba(0,0,0,0.5)',
+          }}>
+            Bookiverse
+          </h1>
+          <p style={{
+            fontSize: 16, color: 'rgba(255,255,255,0.8)',
+            marginBottom: 40, fontWeight: 400,
+          }}>
+            Your personal book collection network
+          </p>
+
+          {/* Buttons */}
+          <div style={{
+            display: 'flex', gap: 14, flexWrap: 'wrap',
+            justifyContent: 'center', marginBottom: 48,
+          }}>
+            <Link to="/register" style={{
+              padding: '14px 36px',
+              background: 'var(--blue-btn)', color: '#fff',
+              borderRadius: 'var(--r-xl)',
+              fontWeight: 700, fontSize: 15,
+              border: '2px solid transparent',
+              whiteSpace: 'nowrap',
+            }}>
+              Create Library
+            </Link>
+            <Link to="/login" style={{
+              padding: '14px 36px',
+              background: 'transparent', color: '#fff',
+              borderRadius: 'var(--r-xl)',
+              fontWeight: 700, fontSize: 15,
+              border: '2px solid rgba(255,255,255,0.75)',
+              whiteSpace: 'nowrap',
+            }}>
+              Access Library
+            </Link>
+          </div>
+
+          {/* ── User avatar circles — FIX: proper circles ── */}
+          {readers.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {readers.slice(0, 5).map((r, i) => (
+                  <div key={r._id} style={{
+                    marginLeft: i === 0 ? 0 : -12,
+                    zIndex: 5 - i,
+                    width: 40, height: 40,
+                    borderRadius: '50%',           // ✅ full circle
+                    overflow: 'hidden',            // ✅ clip to circle
+                    border: '2.5px solid rgba(255,255,255,0.7)',
+                    flexShrink: 0,
+                    background: 'var(--blue-fill)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {r.avatar
+                      ? <img src={r.avatar} alt={r.username}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      : <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--blue-text)' }}>
+                          {r.username?.slice(0, 2).toUpperCase()}
+                        </span>
+                    }
+                  </div>
+                ))}
+                <span style={{
+                  marginLeft: 14, fontSize: 13,
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: 500,
+                }}>
+                  Join {readers.length}+ readers
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          PART 2 — About / Features full screen
+      ══════════════════════════════════════════ */}
+      <section style={{
+        width: '100%',
+        minHeight: '100vh',
+        background: 'var(--surface)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px 24px',
+        borderBottom: '0.5px solid var(--border)',
+      }}>
+        <div style={{ maxWidth: 540, width: '100%', textAlign: 'center' }}>
+          <p style={{
+            fontSize: 12, fontWeight: 700, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--blue-btn)', marginBottom: 14,
+          }}>
+            About Bookiverse
+          </p>
+          <h2 style={{
+            fontSize: 30, fontWeight: 800, color: 'var(--text-1)',
+            letterSpacing: '-0.5px', marginBottom: 16, lineHeight: 1.25,
+          }}>
+            Connect your nearest Book Readers
+          </h2>
+          <p style={{
+            fontSize: 15, color: 'var(--text-2)', lineHeight: 1.8,
+            marginBottom: 48, maxWidth: 420, margin: '0 auto 48px',
+          }}>
+            Bookiverse is a personal book collection network where you can discover books,
+            build your library, connect with readers around you, and share your passion for reading.
+          </p>
+
+          {/* 3 feature buttons — display only */}
+          <div style={{
+            display: 'flex', gap: 14, justifyContent: 'center',
+            flexWrap: 'wrap', marginBottom: 56,
+          }}>
+            {[
+              { label: 'Share',    desc: 'Share your collection' },
+              { label: 'Connect',  desc: 'Find nearby readers'   },
+              { label: 'Discover', desc: 'Explore new books'     },
+            ].map(({ label, desc }) => (
+              <div key={label} style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', gap: 8,
+                padding: '20px 28px',
+                background: 'var(--blue-fill)',
+                borderRadius: 'var(--r-xl)',
+                border: '0.5px solid var(--border)',
+                minWidth: 130, cursor: 'default',
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--blue-btn)' }}>{label}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-2)', textAlign: 'center' }}>{desc}</span>
               </div>
             ))}
-            {readers.length > 4 && (
-              <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--text-2)', fontWeight: 500 }}>
-                +{readers.length - 4} readers
-              </span>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: 'flex', gap: 40, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {[
+              { v: books.length   || '100+', l: 'Books'   },
+              { v: authors.length || '50+',  l: 'Authors' },
+              { v: readers.length || '200+', l: 'Readers' },
+            ].map(({ v, l }) => (
+              <div key={l} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--blue-btn)' }}>{v}</div>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          PART 3 + PART 4 — side by side on desktop
+          FIX: same background color for both
+      ══════════════════════════════════════════ */}
+      <div className="parts-34-wrapper">
+
+        {/* ── PART 3 — Author cards (max 4, same bg as part 4) ── */}
+        <section className="part-3">
+          <div style={{ padding: '48px 28px' }}>
+            <p style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+              textTransform: 'uppercase', color: 'var(--blue-btn)', marginBottom: 8,
+            }}>Authors</p>
+            <h2 style={{
+              fontSize: 22, fontWeight: 700, color: 'var(--text-1)',
+              marginBottom: 24, letterSpacing: '-0.3px',
+            }}>Author Bio</h2>
+
+            {loading ? <Spinner /> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {authors.length === 0
+                  ? <p style={{ color: 'var(--text-3)', fontSize: 14 }}>No authors yet.</p>
+                  : authors.map(a => (
+                    <Link key={a._id} to={`/authors/${a._id}`} style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '16px',
+                      background: 'var(--surface)',
+                      border: '0.5px solid var(--border)',
+                      borderRadius: 'var(--r-lg)',
+                      height: 80,          // ✅ fixed card height
+                      transition: 'border-color 150ms',
+                    }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--blue-400)'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                    >
+                      {/* ✅ Proper full circle author photo */}
+                      <div style={{
+                        width: 44, height: 44,
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        background: 'var(--blue-fill)',
+                        border: '0.5px solid var(--border)',
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 18,
+                      }}>
+                        {a.photo
+                          ? <img src={a.photo} alt={a.name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          : '✍'
+                        }
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          fontWeight: 700, fontSize: 14,
+                          color: 'var(--text-1)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          marginBottom: 3,
+                        }}>{a.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-3)' }}>
+                          {a.booksCount || 0} books uploaded
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                }
+              </div>
             )}
           </div>
+        </section>
 
-          <h1 className="h1" style={{ marginBottom: 8, maxWidth: 320 }}>
-            Booknverse
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 6, fontWeight: 500 }}>
-            Google Library · Access Library
-          </p>
-          <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20, maxWidth: 340 }}>
-            Your personal book collection network. Discover books, connect with readers nearby.
-          </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link to="/register"><Btn variant="primary">Join free</Btn></Link>
-            <Link to="/login"><Btn variant="ghost">Log in</Btn></Link>
+        {/* ── PART 4 — Book grid: exactly 6 books, 2×3, same card height ── */}
+        <section className="part-4">
+          <div style={{ padding: '48px 28px' }}>
+            <p style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
+              textTransform: 'uppercase', color: 'var(--blue-btn)', marginBottom: 8,
+            }}>Books</p>
+            <h2 style={{
+              fontSize: 22, fontWeight: 700, color: 'var(--text-1)',
+              marginBottom: 24, letterSpacing: '-0.3px',
+            }}>Popular books</h2>
+
+            {loading ? <Spinner /> : books.length === 0
+              ? <p style={{ color: 'var(--text-3)', fontSize: 14 }}>No books yet.</p>
+              : (
+                /* ✅ Exactly 2 rows × 3 cols, all same height */
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gridTemplateRows: 'repeat(2, 1fr)', // ✅ 2 rows forced
+                  gap: 12,
+                }}>
+                  {books.slice(0, 6).map(b => (
+                    <Link key={b._id} to={`/books/${b._id}`} style={{ textDecoration: 'none' }}>
+                      <div style={{
+                        background: 'var(--surface)',
+                        border: '0.5px solid var(--border)',
+                        borderRadius: 'var(--r-lg)',
+                        overflow: 'hidden',
+                        display: 'flex', flexDirection: 'column',
+                        height: '100%',  // ✅ stretch to row height
+                        transition: 'border-color 150ms, transform 150ms',
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--blue-400)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                      >
+                        {/* ✅ Fixed size cover image */}
+                        <div style={{
+                          width: '100%',
+                          height: 140,     // ✅ fixed height for all covers
+                          background: 'var(--blue-fill)',
+                          overflow: 'hidden', flexShrink: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 28,
+                        }}>
+                          {b.coverImage
+                            ? <img src={b.coverImage} alt={b.title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            : '📖'
+                          }
+                        </div>
+                        {/* Book info */}
+                        <div style={{ padding: '8px 10px', flex: 1 }}>
+                          <div style={{
+                            fontSize: 12, fontWeight: 700, color: 'var(--text-1)',
+                            overflow: 'hidden', textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap', marginBottom: 3,
+                          }}>{b.title}</div>
+                          <div style={{
+                            fontSize: 11, color: 'var(--text-3)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>{b.author?.name || 'Unknown'}</div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )
+            }
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* ── Connect readers (center section of wireframe) ── */}
-      <section style={{ padding: '24px 0', borderBottom: '0.5px solid var(--border)' }}>
-        <div className="container">
-          <h2 className="h2" style={{ marginBottom: 4 }}>Connect your nearest Book Readers</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16 }}>
-            Follow readers, share collections, message each other
-          </p>
+      {/* ══════════════════════════════════════════
+          EXPLORE MORE — separate full-width centered
+          component outside part 3 & 4
+      ══════════════════════════════════════════ */}
+      <div style={{
+        width: '100%',
+        padding: '40px 24px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'var(--bg)',
+        borderTop: '0.5px solid var(--border)',
+      }}>
+        <Link to="/register" style={{
+          display: 'inline-block',
+          padding: '14px 48px',
+          background: 'transparent',
+          color: 'var(--blue-btn)',
+          border: '2px solid var(--blue-btn)',
+          borderRadius: 'var(--r-xl)',
+          fontWeight: 700, fontSize: 15,
+          transition: 'all 150ms',
+          textAlign: 'center',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--blue-btn)'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--blue-btn)'; }}
+        >
+          Explore More
+        </Link>
+      </div>
 
-          {/* Reader circles row */}
-          <div className="hscroll" style={{ marginBottom: 16, gap: 12 }}>
-            {readers.map(r => (
-              <Link key={r._id} to={`/profile/${r._id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                <Av user={r} size="lg" />
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-1)', textAlign: 'center', maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.username}</span>
-                <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{r.collectedCount || 0} books</span>
-              </Link>
-            ))}
-          </div>
+      {/* ── Responsive CSS ── */}
+      <style>{`
+        /* Mobile: Part 3 + 4 stacked */
+        .parts-34-wrapper {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+        }
+        .part-3 {
+          width: 100%;
+          background: var(--bg);        /* ✅ same as part 4 */
+          border-bottom: 0.5px solid var(--border);
+        }
+        .part-4 {
+          width: 100%;
+          background: var(--bg);        /* ✅ same as part 3 */
+        }
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link to="/register"><Btn variant="primary" size="sm">Connect</Btn></Link>
-            <Link to="/readers"><Btn variant="ghost"   size="sm">Discover readers</Btn></Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Explore books (left section of wireframe) ── */}
-      <section style={{ padding: '24px 0' }}>
-        <div className="container">
-          <div className="sec-header">
-            <h2 className="h2">Explore books</h2>
-            <Link to="/register" style={{ fontSize: 13, color: 'var(--blue-text)', fontWeight: 500 }}>
-              Explore more →
-            </Link>
-          </div>
-
-          {loading
-            ? <Spinner />
-            : <div className="book-grid">
-                {books.map(b => <BookCard key={b._id} book={b} />)}
-              </div>
+        /* Desktop: Part 3 + Part 4 side by side */
+        @media (min-width: 768px) {
+          .parts-34-wrapper {
+            flex-direction: row;
+            align-items: stretch;
           }
-
-          <div style={{ textAlign: 'center', marginTop: 24 }}>
-            <Link to="/register">
-              <Btn variant="secondary">Explore more books</Btn>
-            </Link>
-          </div>
-        </div>
-      </section>
+          .part-3 {
+            width: 40%;
+            border-bottom: none;
+            border-right: 0.5px solid var(--border);
+          }
+          .part-4 {
+            width: 60%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

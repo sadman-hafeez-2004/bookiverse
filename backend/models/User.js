@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '', // Cloudinary URL
     },
+    coverImage: {
+      type: String,
+      default: '',
+    },
     bio: {
       type: String,
       maxlength: [300, 'Bio must be at most 300 characters'],

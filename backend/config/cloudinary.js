@@ -38,8 +38,19 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
-const uploadBookCover  = multer({ storage: bookCoverStorage });
-const uploadAuthorPhoto = multer({ storage: authorPhotoStorage });
-const uploadAvatar     = multer({ storage: avatarStorage });
+// Storage for user cover images
+const coverImageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'booknverse/covers',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 1200, height: 400, crop: 'fill' }],
+  },
+});
 
-module.exports = { cloudinary, uploadBookCover, uploadAuthorPhoto, uploadAvatar };
+const uploadBookCover   = multer({ storage: bookCoverStorage });
+const uploadAuthorPhoto = multer({ storage: authorPhotoStorage });
+const uploadAvatar      = multer({ storage: avatarStorage });
+const uploadCoverImage  = multer({ storage: coverImageStorage });
+
+module.exports = { cloudinary, uploadBookCover, uploadAuthorPhoto, uploadAvatar, uploadCoverImage };
