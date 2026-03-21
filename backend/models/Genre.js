@@ -11,11 +11,12 @@ const genreSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // Not required — default genres seeded without a user
+      required: false,
     },
     isDefault: {
       type: Boolean,
-      default: false, // default genres cannot be deleted
+      default: false,
     },
   },
   { timestamps: true }

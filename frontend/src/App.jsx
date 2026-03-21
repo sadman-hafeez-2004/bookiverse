@@ -14,11 +14,13 @@ import Profile     from './pages/Profile';
 import BookDetail  from './pages/BookDetail';
 import Chat        from './pages/Chat';
 import {
-  ReadersPage, SettingsPage,
-  AuthorDetailPage, SearchPage,
+  ReadersPage,
+  SettingsPage,
+  AuthorDetailPage,
+  SearchPage,
 } from './pages/Pages';
 import { UploadPage } from './pages/UploadPage';
-import { AdminPage } from './pages/AdminPanel';
+import { AdminPage }  from './pages/AdminPanel';
 
 function AppInner() {
   const { user, loading, init } = useAuthStore();
@@ -48,9 +50,9 @@ function AppInner() {
       <Navbar />
       <Routes>
         {/* Public */}
-        <Route path="/"         element={user ? <Home /> : <PublicHome />} />
-        <Route path="/login"    element={user ? <Navigate to="/" /> : <LoginPage />} />
-        <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
+        <Route path="/"            element={user ? <Home /> : <PublicHome />} />
+        <Route path="/login"       element={user ? <Navigate to="/" /> : <LoginPage />} />
+        <Route path="/register"    element={user ? <Navigate to="/" /> : <RegisterPage />} />
         <Route path="/books/:id"   element={<BookDetail />} />
         <Route path="/authors/:id" element={<AuthorDetailPage />} />
         <Route path="/profile/:id" element={<Profile />} />
@@ -58,11 +60,11 @@ function AppInner() {
         <Route path="/search"      element={<SearchPage />} />
 
         {/* Protected */}
-        <Route path="/upload"   element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/upload"             element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
+        <Route path="/settings"           element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         <Route path="/chat"               element={<ProtectedRoute><Chat /></ProtectedRoute>} />
         <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+        <Route path="/admin"              element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

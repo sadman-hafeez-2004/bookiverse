@@ -1,61 +1,79 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 
-// Default genres as fallback if DB fetch fails
+// Hardcoded fallback shown if the API call fails
 const DEFAULT_GENRES = [
   'Fiction','Non-Fiction','Science Fiction','Fantasy','Mystery','Thriller',
   'Romance','Horror','Biography','History','Self-Help','Science','Philosophy',
   'Poetry','Children','Young Adult','Graphic Novel','Other',
 ];
 
-// Cache genres in memory so we don't fetch on every page
+// Module-level cache so all components share the same genre list
 let cachedGenres = null;
 let fetchPromise = null;
+const listeners  = new Set();
+
+// Call this after any genre add/edit/delete to force a fresh fetch
+export function invalidateGenreCache() {
+  cachedGenres = null;
+  fetchPromise  = null;
+}
+
+function notifyListeners(genres) {
+  listeners.forEach(fn => fn(genres));
+}
+
+// FIX: fetch ALL genres (default + custom) from DB
+// /admin/genres/all is a public route that returns every genre in the DB
+async function fetchGenres() {
+  if (fetchPromise) return fetchPromise;
+
+  fetchPromise = api.get('/admin/genres/all')
+    .then(({ data }) => {
+      const dbNames = data.genres.map(g => g.name);
+      // Merge defaults + DB genres, no duplicates
+      const merged  = [...new Set([...DEFAULT_GENRES, ...dbNames])];
+      cachedGenres  = merged;
+      fetchPromise  = null;
+      return merged;
+    })
+    .catch(() => {
+      fetchPromise = null;
+      cachedGenres = DEFAULT_GENRES;
+      return DEFAULT_GENRES;
+    });
+
+  return fetchPromise;
+}
 
 export function useGenres() {
   const [genres,  setGenres]  = useState(cachedGenres || DEFAULT_GENRES);
   const [loading, setLoading] = useState(!cachedGenres);
 
   useEffect(() => {
-    if (cachedGenres) return; // already cached
+    const listener = (newGenres) => setGenres(newGenres);
+    listeners.add(listener);
 
-    // Reuse existing promise if already fetching
-    if (!fetchPromise) {
-      fetchPromise = api.get('/admin/genres/all')
-        .then(({ data }) => {
-          // Merge DB genres with defaults (no duplicates)
-          const dbNames    = data.genres.map(g => g.name);
-          const allGenres  = [...new Set([...DEFAULT_GENRES, ...dbNames])];
-          cachedGenres     = allGenres;
-          fetchPromise     = null;
-          return allGenres;
-        })
-        .catch(() => {
-          fetchPromise = null;
-          return DEFAULT_GENRES;
-        });
+    if (!cachedGenres) {
+      fetchGenres().then(g => {
+        setGenres(g);
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
     }
 
-    fetchPromise.then(genres => {
-      setGenres(genres);
-      setLoading(false);
-    });
+    return () => listeners.delete(listener);
   }, []);
 
-  // Call this after adding a new genre to refresh the cache
   const refresh = () => {
-    cachedGenres = null;
-    fetchPromise = null;
+    invalidateGenreCache();
     setLoading(true);
-    api.get('/admin/genres/all')
-      .then(({ data }) => {
-        const dbNames   = data.genres.map(g => g.name);
-        const allGenres = [...new Set([...DEFAULT_GENRES, ...dbNames])];
-        cachedGenres    = allGenres;
-        setGenres(allGenres);
-      })
-      .catch(() => setGenres(DEFAULT_GENRES))
-      .finally(() => setLoading(false));
+    fetchGenres().then(g => {
+      setGenres(g);
+      setLoading(false);
+      notifyListeners(g);
+    });
   };
 
   return { genres, loading, refresh };

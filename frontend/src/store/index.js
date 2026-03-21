@@ -29,8 +29,11 @@ export const useAuthStore = create((set) => ({
     return data.user;
   },
 
-  register: async (username, email, password) => {
-    const { data } = await api.post('/auth/register', { username, email, password });
+  // ✅ register now accepts displayName
+  register: async (displayName, username, email, password) => {
+    const { data } = await api.post('/auth/register', {
+      displayName, username, email, password,
+    });
     localStorage.setItem('bn_token', data.token);
     set({ user: data.user, token: data.token });
     connectSocket(data.token);
@@ -53,7 +56,10 @@ export const useToastStore = create((set) => ({
   add: (message, type = 'success') => {
     const id = ++tid;
     set((s) => ({ toasts: [...s.toasts, { id, message, type }] }));
-    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), 3200);
+    setTimeout(
+      () => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+      3200
+    );
   },
 }));
 

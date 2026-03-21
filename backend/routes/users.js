@@ -8,9 +8,13 @@ const { protect, optionalAuth } = require('../middleware/auth');
 const { uploadAvatar, uploadCoverImage } = require('../config/cloudinary');
 
 router.get('/',                   getUsers);
-router.get('/:id',                optionalAuth, getUserById);
-router.put('/me',                 protect, uploadAvatar.single('avatar'), updateMe);
+
+// ✅ IMPORTANT: /me and /me/cover MUST come before /:id
+// otherwise Express matches "me" as an :id parameter
 router.put('/me/cover',           protect, uploadCoverImage.single('coverImage'), updateCover);
+router.put('/me',                 protect, uploadAvatar.single('avatar'), updateMe);
+
+router.get('/:id',                optionalAuth, getUserById);
 router.post('/:id/follow',        protect, toggleFollow);
 router.get('/:id/followers',      getFollowers);
 router.get('/:id/following',      getFollowing);

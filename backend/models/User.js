@@ -1,56 +1,66 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt   = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
+    // ✅ Display name — shown prominently on profile (required)
+    displayName: {
+      type:      String,
+      required:  [true, 'Display name is required'],
+      trim:      true,
+      maxlength: [50, 'Display name must be at most 50 characters'],
+    },
+
     username: {
-      type: String,
-      required: [true, 'Username is required'],
-      unique: true,
-      trim: true,
-      minlength: [3, 'Username must be at least 3 characters'],
+      type:      String,
+      required:  [true, 'Username is required'],
+      unique:    true,
+      trim:      true,
+      minlength: [3,  'Username must be at least 3 characters'],
       maxlength: [30, 'Username must be at most 30 characters'],
     },
+
     email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
+      type:      String,
+      required:  [true, 'Email is required'],
+      unique:    true,
       lowercase: true,
-      trim: true,
+      trim:      true,
     },
+
     password: {
-      type: String,
-      required: [true, 'Password is required'],
+      type:      String,
+      required:  [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // never returned in queries by default
+      select:    false,
     },
+
     avatar: {
-      type: String,
-      default: '', // Cloudinary URL
+      type:    String,
+      default: '',
     },
+
     coverImage: {
-      type: String,
+      type:    String,
       default: '',
     },
+
     bio: {
-      type: String,
+      type:      String,
       maxlength: [300, 'Bio must be at most 300 characters'],
-      default: '',
+      default:   '',
     },
+
     role: {
-      type: String,
-      enum: ['user', 'admin'],
+      type:    String,
+      enum:    ['user', 'admin'],
       default: 'user',
     },
 
-    // Follower counts (denormalized for fast profile reads)
     followersCount: { type: Number, default: 0 },
     followingCount: { type: Number, default: 0 },
-
-    // Total books collected (denormalized)
     collectedCount: { type: Number, default: 0 },
 
-    // Ban
     isBanned:  { type: Boolean, default: false },
     banReason: { type: String,  default: '' },
   },
@@ -64,7 +74,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password for login
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
