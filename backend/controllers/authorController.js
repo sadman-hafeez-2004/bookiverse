@@ -1,5 +1,6 @@
 const Author = require('../models/Author');
 const Book   = require('../models/Book');
+const { deleteImage } = require('../config/cloudinary');
 
 // GET /api/authors  — list / search
 const getAuthors = async (req, res, next) => {
@@ -15,35 +16,36 @@ const getAuthors = async (req, res, next) => {
 
     const total = await Author.countDocuments(query);
     res.json({ authors, total, page: Number(page) });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /api/authors/:id
 const getAuthorById = async (req, res, next) => {
   try {
-    const author = await Author.findById(req.params.id)
-      .populate('uploadedBy', 'username');
-
+    const author = await Author.findById(req.params.id).populate('uploadedBy', 'username');
     if (!author) return res.status(404).json({ message: 'Author not found.' });
 
-    // All books by this author
     const books = await Book.find({ author: author._id })
-      .select('title coverImage genre averageRating reviewsCount collectionsCount publishedYear')
+      .select('title coverImage genre averageRating reviewsCount collectionsCount')
       .sort({ createdAt: -1 });
 
     res.json({ author, books });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
-// POST /api/authors  — create (logged-in users)
+// POST /api/authors  — create new author (logged-in users)
 const createAuthor = async (req, res, next) => {
   try {
     const { name, bio, nationality } = req.body;
     if (!name) return res.status(400).json({ message: 'Author name is required.' });
 
     const authorData = {
-      name:        name.trim(),
-      bio:         bio         || '',
+      name,
+      bio:         bio || '',
       nationality: nationality || '',
       uploadedBy:  req.user._id,
     };
@@ -51,41 +53,54 @@ const createAuthor = async (req, res, next) => {
 
     const author = await Author.create(authorData);
     res.status(201).json({ author });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
-// PUT /api/authors/:id  — update name/bio/nationality/photo (uploader or admin)
+// PUT /api/authors/:id  — update (uploader or admin)
 const updateAuthor = async (req, res, next) => {
   try {
     const author = await Author.findById(req.params.id);
     if (!author) return res.status(404).json({ message: 'Author not found.' });
 
-    const isOwner = author.uploadedBy?.toString() === req.user._id.toString();
+    const isOwner = author.uploadedBy.toString() === req.user._id.toString();
     if (!isOwner && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to edit this author.' });
     }
 
     const { name, bio, nationality } = req.body;
+    if (name)        author.name        = name;
+    if (bio)         author.bio         = bio;
+    if (nationality) author.nationality = nationality;
 
-    if (name)                  author.name        = name.trim();
-    if (bio !== undefined)     author.bio         = bio;
-    if (nationality !== undefined) author.nationality = nationality;
-
-    // ✅ FIX: update photo if a new file was uploaded
-    if (req.file) author.photo = req.file.path;
+    // If a new photo is uploaded, delete the old one from Cloudinary first
+    if (req.file) {
+      await deleteImage(author.photo);
+      author.photo = req.file.path;
+    }
 
     await author.save();
     res.json({ author });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 // DELETE /api/authors/:id  — admin only
 const deleteAuthor = async (req, res, next) => {
   try {
-    const author = await Author.findByIdAndDelete(req.params.id);
+    const author = await Author.findById(req.params.id);
     if (!author) return res.status(404).json({ message: 'Author not found.' });
+
+    // Delete author photo from Cloudinary
+    await deleteImage(author.photo);
+
+    await author.deleteOne();
     res.json({ message: 'Author deleted.' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = { getAuthors, getAuthorById, createAuthor, updateAuthor, deleteAuthor };
