@@ -236,7 +236,7 @@ export default function Profile() {
               <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>@{profile.username}</div>
             )}
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 3 }}>
-              {profile.collectedCount || 0} books
+              {books.length || 0} books
             </div>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function Profile() {
         <div className="profile-body">
           <div style={{ display: 'flex', gap: 24, marginBottom: 14, marginTop: 12 }}>
             {[
-              { v: profile.collectedCount || 0, l: 'Books' },
+              { v: books.length || profile.collectedCount || 0, l:'Books' },
               { v: profile.followersCount  || 0, l: 'Followers' },
               { v: profile.followingCount  || 0, l: 'Following' },
             ].map(({ v, l }) => (

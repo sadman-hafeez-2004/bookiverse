@@ -8,15 +8,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/**
- * Extract the Cloudinary public_id from a full URL.
- * e.g. https://res.cloudinary.com/demo/image/upload/v123/booknverse/books/abc123.jpg
- *      → booknverse/books/abc123
- */
+// Extract public_id from Cloudinary URL
 const getPublicId = (url) => {
-  if (!url) return null;
+  if (!url || !url.includes('cloudinary')) return null;
   try {
-    // Match everything after /upload/ (skip version like v1234567/)
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z]+$/);
     return match ? match[1] : null;
   } catch {
@@ -24,10 +19,7 @@ const getPublicId = (url) => {
   }
 };
 
-/**
- * Delete an image from Cloudinary by its URL.
- * Silently ignores errors so a missing image never blocks your main logic.
- */
+// Delete image from Cloudinary (silent fail — never blocks main logic)
 const deleteImage = async (url) => {
   const publicId = getPublicId(url);
   if (!publicId) return;
@@ -38,7 +30,6 @@ const deleteImage = async (url) => {
   }
 };
 
-// Storage for book cover images
 const bookCoverStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -48,7 +39,6 @@ const bookCoverStorage = new CloudinaryStorage({
   },
 });
 
-// Storage for author photos
 const authorPhotoStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -58,7 +48,6 @@ const authorPhotoStorage = new CloudinaryStorage({
   },
 });
 
-// Storage for user avatars
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -68,7 +57,6 @@ const avatarStorage = new CloudinaryStorage({
   },
 });
 
-// Storage for user cover images
 const coverImageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -85,7 +73,7 @@ const uploadCoverImage  = multer({ storage: coverImageStorage });
 
 module.exports = {
   cloudinary,
-  deleteImage,          // ← new helper
+  deleteImage,
   uploadBookCover,
   uploadAuthorPhoto,
   uploadAvatar,

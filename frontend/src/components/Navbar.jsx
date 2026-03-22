@@ -154,12 +154,16 @@ export default function Navbar() {
         }}>
 
           {/* Logo */}
-          <Link to="/" style={{
-            fontWeight: 700, fontSize: 17,
-            color: 'var(--blue-btn)',
-            letterSpacing: '-0.3px', flexShrink: 0,
-          }}>
-            Bookiverse
+          <Link to="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <img
+            src="../../public/logo.png"   
+            alt="Bookiverse"
+            style={{
+              height: 36,        
+              width: 'auto',     
+              objectFit: 'contain',
+            }}
+          />
           </Link>
 
           {/* Search */}
