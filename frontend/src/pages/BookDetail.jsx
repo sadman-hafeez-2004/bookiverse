@@ -21,30 +21,41 @@ export default function BookDetail() {
   const [loading,   setLoading]   = useState(true);
 
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [rating,     setRating]     = useState(0);
-  const [text,       setText]       = useState('');
+  const [rating,  setRating]  = useState(0);
+  const [text,    setText]    = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Edit book state
   const [editing,   setEditing]   = useState(false);
   const [editForm,  setEditForm]  = useState({});
   const [coverFile, setCoverFile] = useState(null);
   const [coverPrev, setCoverPrev] = useState('');
   const [saving,    setSaving]    = useState(false);
 
+  // Author search state
+  const [allAuthors,     setAllAuthors]     = useState([]);
+  const [authorQuery,    setAuthorQuery]    = useState('');
+  const [showAuthorDrop, setShowAuthorDrop] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
       api.get(`/books/${id}`),
       api.get(`/books/${id}/reviews`),
-    ]).then(([b, r]) => {
+      api.get('/authors', { params: { limit: 500 } }),
+    ]).then(([b, r, a]) => {
       setBook(b.data.book);
       setCollected(b.data.isCollected);
+      setAllAuthors(a.data.authors);
       setEditForm({
         title:         b.data.book.title,
         genre:         b.data.book.genre,
         description:   b.data.book.description || '',
         publishedYear: b.data.book.publishedYear || '',
+        authorId:      b.data.book.author?._id || '',
+        authorName:    b.data.book.author?.name || '',
       });
+      setAuthorQuery(b.data.book.author?.name || '');
       setReviews(r.data.reviews);
       if (r.data.myReviewId) {
         const mine = r.data.reviews.find(rv => rv._id === r.data.myReviewId);
@@ -92,10 +103,15 @@ export default function BookDetail() {
     e.preventDefault(); setSaving(true);
     try {
       const fd = new FormData();
-      Object.entries(editForm).forEach(([k, v]) => { if (v !== '') fd.append(k, v); });
+      if (editForm.title)         fd.append('title',         editForm.title);
+      if (editForm.genre)         fd.append('genre',         editForm.genre);
+      if (editForm.description)   fd.append('description',   editForm.description);
+      if (editForm.publishedYear) fd.append('publishedYear', editForm.publishedYear);
+      if (editForm.authorId)      fd.append('authorId',      editForm.authorId);
       if (coverFile) fd.append('coverImage', coverFile);
       const { data } = await api.put(`/books/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setBook(data.book);
+      setAuthorQuery(data.book.author?.name || '');
       setEditing(false);
       setCoverFile(null); setCoverPrev('');
       add('Book updated!');
@@ -108,6 +124,17 @@ export default function BookDetail() {
     await api.delete(`/books/${id}`);
     add('Book deleted.');
     navigate('/');
+  };
+
+  // Filter authors for dropdown
+  const filteredAuthors = authorQuery.trim()
+    ? allAuthors.filter(a => a.name.toLowerCase().includes(authorQuery.toLowerCase()))
+    : allAuthors.slice(0, 8);
+
+  const selectAuthor = (author) => {
+    setEditForm(p => ({ ...p, authorId: author._id, authorName: author.name }));
+    setAuthorQuery(author.name);
+    setShowAuthorDrop(false);
   };
 
   if (loading) return <Spinner />;
@@ -125,8 +152,7 @@ export default function BookDetail() {
           display: 'flex', alignItems: 'center', gap: 6,
           background: 'none', border: 'none', cursor: 'pointer',
           color: 'var(--text-2)', fontSize: 13, fontWeight: 500,
-          marginBottom: 16, padding: 0,
-          transition: 'color 150ms',
+          marginBottom: 16, padding: 0, transition: 'color 150ms',
         }}
         onMouseEnter={e => e.currentTarget.style.color = 'var(--blue-btn)'}
         onMouseLeave={e => e.currentTarget.style.color = 'var(--text-2)'}
@@ -165,19 +191,90 @@ export default function BookDetail() {
         <div style={{ flex: 1, minWidth: 180 }}>
           {editing ? (
             <form onSubmit={saveEdit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input className="input" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} placeholder="Title" required />
-              <select className="input" value={editForm.genre} onChange={e => setEditForm(p => ({ ...p, genre: e.target.value }))} required>
+
+              {/* Title */}
+              <input className="input" value={editForm.title}
+                onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))}
+                placeholder="Title" required />
+
+              {/* Genre */}
+              <select className="input" value={editForm.genre}
+                onChange={e => setEditForm(p => ({ ...p, genre: e.target.value }))} required>
                 {GENRES.map(g => <option key={g}>{g}</option>)}
               </select>
-              <textarea className="input textarea" value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} placeholder="Description" style={{ minHeight: 70 }} />
-              <input className="input" type="number" value={editForm.publishedYear} onChange={e => setEditForm(p => ({ ...p, publishedYear: e.target.value }))} placeholder="Year" />
+
+              {/* Author search dropdown */}
+              <div style={{ position: 'relative' }}>
+                <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>Author</label>
+                <input
+                  className="input"
+                  value={authorQuery}
+                  onChange={e => { setAuthorQuery(e.target.value); setShowAuthorDrop(true); }}
+                  onFocus={() => setShowAuthorDrop(true)}
+                  placeholder="Search author…"
+                />
+                {showAuthorDrop && filteredAuthors.length > 0 && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+                    background: 'var(--surface)', border: '0.5px solid var(--border-strong)',
+                    borderRadius: 'var(--r-md)', maxHeight: 200, overflowY: 'auto',
+                    zIndex: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                  }}>
+                    {filteredAuthors.map(a => (
+                      <div key={a._id} onClick={() => selectAuthor(a)} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 12px', cursor: 'pointer', fontSize: 13,
+                        borderBottom: '0.5px solid var(--border)',
+                        transition: 'background 100ms',
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--blue-fill)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div style={{
+                          width: 30, height: 30, borderRadius: '50%',
+                          background: 'var(--blue-fill)', flexShrink: 0,
+                          overflow: 'hidden', display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 13, fontWeight: 700, color: 'var(--blue-text)',
+                        }}>
+                          {a.photo
+                            ? <img src={a.photo} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            : a.name.slice(0, 2).toUpperCase()
+                          }
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{a.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{a.booksCount || 0} books</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              <textarea className="input textarea" value={editForm.description}
+                onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))}
+                placeholder="Description" style={{ minHeight: 70 }} />
+
+              {/* Published year */}
+              <input className="input" type="number" value={editForm.publishedYear}
+                onChange={e => setEditForm(p => ({ ...p, publishedYear: e.target.value }))}
+                placeholder="Year" />
+
+              {/* Cover upload */}
               <div>
                 <label style={{ fontSize: 13, color: 'var(--text-2)', display: 'block', marginBottom: 4 }}>Change cover</label>
-                <input type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; if (f) { setCoverFile(f); setCoverPrev(URL.createObjectURL(f)); } }} className="input" style={{ padding: 6 }} />
+                <input type="file" accept="image/*"
+                  onChange={e => { const f = e.target.files[0]; if (f) { setCoverFile(f); setCoverPrev(URL.createObjectURL(f)); } }}
+                  className="input" style={{ padding: 6 }} />
               </div>
+
               <div style={{ display: 'flex', gap: 8 }}>
                 <Btn variant="primary" type="submit" size="sm" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Btn>
-                <Btn variant="ghost" type="button" size="sm" onClick={() => { setEditing(false); setCoverFile(null); setCoverPrev(''); }}>Cancel</Btn>
+                <Btn variant="ghost" type="button" size="sm" onClick={() => {
+                  setEditing(false); setCoverFile(null); setCoverPrev('');
+                  setAuthorQuery(book.author?.name || '');
+                }}>Cancel</Btn>
               </div>
             </form>
           ) : (
@@ -258,7 +355,9 @@ export default function BookDetail() {
               </div>
               <Textarea placeholder="Share your thoughts…" value={text} onChange={e => setText(e.target.value)} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <Btn variant="primary" type="submit" size="sm" disabled={submitting}>{submitting ? 'Posting…' : myReview ? 'Update' : 'Post'}</Btn>
+                <Btn variant="primary" type="submit" size="sm" disabled={submitting}>
+                  {submitting ? 'Posting…' : myReview ? 'Update' : 'Post'}
+                </Btn>
                 <Btn variant="ghost" type="button" size="sm" onClick={() => setShowReviewForm(false)}>Cancel</Btn>
               </div>
             </form>
