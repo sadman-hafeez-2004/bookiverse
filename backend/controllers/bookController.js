@@ -87,11 +87,12 @@ const updateBook = async (req, res, next) => {
     if (!isOwner && req.user.role !== 'admin')
       return res.status(403).json({ message: 'Not authorized to edit this book.' });
 
-    const { title, genre, description, publishedYear } = req.body;
+    const { title, genre, description, publishedYear, authorId } = req.body;
     if (title)         book.title         = title;
     if (genre)         book.genre         = genre;
     if (description)   book.description   = description;
     if (publishedYear) book.publishedYear = publishedYear;
+    if (authorId)      book.author        = authorId;
 
     if (req.file) {
       await deleteImage(book.coverImage);
