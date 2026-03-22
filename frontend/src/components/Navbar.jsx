@@ -156,7 +156,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
           <img
-            src="../../public/logo.png"   
+            src="/logo.png"   
             alt="Bookiverse"
             style={{
               height: 36,        
